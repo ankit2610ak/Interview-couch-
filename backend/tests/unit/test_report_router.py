@@ -1,6 +1,5 @@
 from unittest.mock import patch
 from typing import Any, Dict, List
-import pytest
 from fastapi.testclient import TestClient
 
 

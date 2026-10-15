@@ -60,7 +60,10 @@ class TestFullInterviewWorkflowIntegration:
         resp4 = MagicMock()
         resp4.choices = [MagicMock(message=MagicMock(content=report_json))]
 
-        mock_client.chat.completions.create.side_effect = [resp1, resp2, resp3, resp4]
+        resp_val = MagicMock()
+        resp_val.choices = [MagicMock(message=MagicMock(content="VALID"))]
+
+        mock_client.chat.completions.create.side_effect = [resp_val, resp1, resp2, resp3, resp4]
 
         # Step 1: Start Interview
         start_res = client.post(

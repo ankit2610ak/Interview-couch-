@@ -13,6 +13,7 @@ def get_model_name() -> str:
     """Return the configured Groq model name, defaulting to openai/gpt-oss-120b."""
     return os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 
+
 INTERVIEWER_SYSTEM_PROMPT = """You are an expert technical interviewer conducting a technical interview on the topic of "{topic}" at the "{difficulty}" difficulty level.
 
 Guidelines and Instructions:
@@ -55,6 +56,60 @@ The JSON must have exactly these fields:
 - revision_areas: string (comma-separated list of 3 to 5 specific topics)
 - verdict: string (2 to 3 sentences of overall direct assessment)
 - recommendation: string (must be exactly the word Pass or the word Fail)"""
+TOPIC_VALIDATION_PROMPT = """You are an expert technical interview topic validator.
+Analyze the user's proposed interview topic: "{topic}".
+
+Guidelines:
+- ACCEPT: Any technical, engineering, software, computer science, data, IT, or professional job interview subject.
+- ACCEPT: Slight typos, misspellings, or phonetic spellings of valid subjects (e.g., "pyton" -> Python, "reack" -> React, "javascrpt" -> JavaScript, "kubernets" -> Kubernetes, "sytem design" -> System Design, "algo", "dsa", "sqll"). If it reasonably matches a recognizable topic despite a typo, mark it VALID.
+- REJECT: Pure gibberish, random keyboard mash (e.g. "asdfgh", "qwerty", "zxcvbnm"), arbitrary placeholder acronyms or words with no interview context (e.g. "lala", "xyz", "abc", "foo", "bar", "blablabla").
+
+Respond with ONLY one word: VALID or INVALID."""
+
+
+def is_syntactically_invalid_topic(topic: str) -> bool:
+    """Fast local heuristic check for obvious gibberish or non-topic strings."""
+    cleaned = topic.strip().lower()
+    if len(cleaned) < 2:
+        return True
+    if not re.search(r"[a-zA-Z]", cleaned):
+        return True
+    # Pure repeated chars like aaaaa, zzzzz
+    if re.match(r"^(.)\1+$", cleaned):
+        return True
+    # Common test / dummy strings
+    if cleaned in {"lala", "xyz", "abc", "asdf", "qwerty", "test", "foo", "bar", "baz", "none", "na", "null"}:
+        return True
+    return False
+
+
+def validate_interview_topic(topic: str) -> bool:
+    """Validate whether an interview topic is valid and recognizable.
+
+    First applies instant heuristic checks, then validates with Groq LLM if ambiguous.
+    """
+    if is_syntactically_invalid_topic(topic):
+        return False
+
+    try:
+        client = get_groq_client()
+        model = get_model_name()
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{
+                "role": "user",
+                "content": TOPIC_VALIDATION_PROMPT.format(topic=topic),
+            }],
+            temperature=0.0,
+            max_tokens=250,
+        )
+        content = (response.choices[0].message.content or "").strip().upper()
+        if "INVALID" in content:
+            return False
+        return True
+    except Exception:
+        # If validator LLM call fails, fail open so legitimate users aren't blocked
+        return True
 
 
 def get_groq_client() -> Groq:
@@ -73,7 +128,7 @@ def get_next_interviewer_message(
     conversation_history: List[Dict[str, Any]],
 ) -> Tuple[str, bool]:
     """Generate the next interviewer message based on conversation history.
-    
+
     Parameters:
     - topic: The technical topic for the interview.
     - difficulty: The difficulty level (Easy, Medium, Hard).
@@ -132,7 +187,7 @@ def generate_interview_report(
     conversation_history: List[Dict[str, Any]],
 ) -> Dict[str, Any]:
     """Generate a structured evaluation report from the interview conversation history.
-    
+
     Parameters:
     - topic: The technical topic of the interview.
     - difficulty: The difficulty level.

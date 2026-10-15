@@ -1,5 +1,4 @@
 from unittest.mock import patch
-import pytest
 from fastapi.testclient import TestClient
 
 
@@ -36,6 +35,12 @@ class TestInterviewStartEndpoint:
         """POST /api/interview/start returns 422 when difficulty is missing."""
         response = client.post("/api/interview/start", json={"topic": "React"})
         assert response.status_code == 422
+
+    def test_start_interview_invalid_topic_returns_400(self, client: TestClient):
+        """POST /api/interview/start returns 400 when invalid/gibberish topic is provided."""
+        response = client.post("/api/interview/start", json={"topic": "lala", "difficulty": "Medium"})
+        assert response.status_code == 400
+        assert "does not appear to be a valid interview topic" in response.json()["detail"]
 
     @patch("routers.interview.get_next_interviewer_message")
     def test_start_interview_service_exception_returns_500(self, mock_get_msg, client: TestClient):

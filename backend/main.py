@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 import logging
 from fastapi import FastAPI, HTTPException, Request

@@ -46,10 +46,22 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Configure CORS middleware allowing all origins
+# Configure environment-aware CORS origins (Local dev + Production)
+env_origins = os.getenv("CORS_ORIGINS", "")
+allowed_origins = [
+    origin.strip()
+    for origin in env_origins.split(",")
+    if origin.strip()
+] if env_origins else [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://interview-couch.vercel.app",
+    "https://interview-couch-n4i1hgzol-ganraj-creations.vercel.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,6 +1,6 @@
 # 🎙️ AI Interview Coach
 
-An AI-powered mock interview application that conducts technical interviews, gives real-time feedback, and stores your session history — powered by **Groq LLM** (llama-3.3-70b), **FastAPI**, and **Next.js**.
+An AI-powered mock interview application that conducts technical interviews, gives real-time feedback, and stores your session history — powered by **Groq LLM**, **FastAPI**, and **Next.js**.
 
 ![Tech Stack](https://img.shields.io/badge/stack-FastAPI%20%7C%20Next.js%20%7C%20Groq-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.11%2B-brightgreen?style=flat-square)
@@ -9,70 +9,53 @@ An AI-powered mock interview application that conducts technical interviews, giv
 
 ---
 
-## 📋 Table of Contents
-
-- [Features](#-features)
-- [Architecture Overview](#-architecture-overview)
-- [Flow Diagram](#-flow-diagram)
-- [Use Case Diagram](#-use-case-diagram)
-- [Class Diagram](#-class-diagram)
-- [Project Structure](#-project-structure)
-- [Local Setup](#-local-setup)
-- [Environment Variables](#-environment-variables)
-- [Running Tests](#-running-tests)
-- [Deployment Guide](#-deployment-guide)
-- [Security Notes](#-security-notes)
-
----
-
 ## ✨ Features
 
 - 🤖 **AI-Powered Interviewer** — realistic multi-turn interview conversations via Groq LLM
-- 🎯 **Topic & Difficulty Selection** — customise interviews by topic and level (Easy / Medium / Hard)
+- 🎯 **Topic & Difficulty Selection** — customise by topic and level (Easy / Medium / Hard)
 - 📊 **Detailed Reports** — AI-generated performance reports with scores and feedback
-- 📚 **Interview History** — persist and review past sessions locally in the browser
-- 🌐 **Offline Detection** — instant error message when internet is unavailable
-- 🔁 **Auto-Retry** — transparent retry mechanism with user-facing progress
-- 🔒 **Secret-Safe** — no secrets committed; API key stays in `.env` (gitignored)
+- 📚 **Interview History** — review all past sessions from the left drawer
+- 🌐 **Offline Detection** — clear error shown when internet is unavailable
+- 🔁 **Auto-Retry** — automatic retry with visible progress on transient failures
 
 ---
 
 ## 🏗️ Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                       Client Browser                        │
-│                                                             │
-│  ┌───────────────────┐        ┌────────────────────────┐   │
-│  │  Home Page        │        │  Interview Page         │   │
-│  │  (topic setup)    │──────▶│  (multi-turn chat)      │   │
-│  └───────────────────┘        └────────────┬───────────┘   │
-│                                            │                │
-│                                  ┌─────────▼──────────┐    │
-│                                  │  Report Page        │    │
-│                                  │  (score + feedback) │    │
-│                                  └────────────────────-┘    │
-└─────────────────────────┬───────────────────────────────────┘
-                          │  HTTPS / REST API
-                          │
-┌─────────────────────────▼───────────────────────────────────┐
-│                     FastAPI Backend                          │
-│                                                             │
-│  POST /api/interview/start   ─── starts a new session       │
-│  POST /api/interview/answer  ─── submits user answer        │
-│  POST /api/report/generate   ─── generates final report     │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │                  LLM Service                         │   │
-│  │  (groq client · prompt engineering · response parse) │   │
-│  └───────────────────────┬─────────────────────────────┘   │
-└──────────────────────────┼──────────────────────────────────┘
-                           │  HTTPS
-                           │
-                ┌──────────▼──────────┐
-                │   Groq Cloud API    │
-                │  llama-3.3-70b      │
-                └─────────────────────┘
+┌──────────────────────────────────────────────────┐
+│                  Client Browser                  │
+│                                                  │
+│  ┌─────────────────┐    ┌─────────────────────┐  │
+│  │   Home Page     │───▶│   Interview Page    │  │
+│  │  (topic setup)  │    │  (multi-turn chat)  │  │
+│  └─────────────────┘    └──────────┬──────────┘  │
+│                                    │              │
+│                          ┌─────────▼──────────┐  │
+│                          │    Report Page      │  │
+│                          │ (score + feedback)  │  │
+│                          └────────────────────-┘  │
+└────────────────────┬─────────────────────────────┘
+                     │  REST API (JSON/HTTPS)
+                     │
+┌────────────────────▼─────────────────────────────┐
+│               FastAPI Backend                    │
+│                                                  │
+│  POST /api/interview/start                       │
+│  POST /api/interview/answer                      │
+│  POST /api/report/generate                       │
+│                                                  │
+│  ┌────────────────────────────────────────────┐  │
+│  │             LLM Service                    │  │
+│  │  (Groq client · prompt engineering)        │  │
+│  └───────────────────┬────────────────────────┘  │
+└──────────────────────┼───────────────────────────┘
+                       │  HTTPS
+                       │
+            ┌──────────▼──────────┐
+            │   Groq Cloud API    │
+            │  llama-3.3-70b      │
+            └─────────────────────┘
 ```
 
 ---
@@ -237,54 +220,39 @@ classDiagram
 ## 📁 Project Structure
 
 ```
-Interview couch/
-├── .gitignore                        # Root-level gitignore
-├── README.md                         # This file
-│
+Interview-couch-/
 ├── backend/
-│   ├── .env                          # ⚠️ Gitignored — local secrets only
-│   ├── .env.example                  # ✅ Safe to commit — template
-│   ├── .gitignore
-│   ├── main.py                       # FastAPI app + CORS + exception handler
-│   ├── schemas.py                    # Pydantic request/response models
-│   ├── requirements.txt              # Production dependencies
-│   ├── requirements-dev.txt          # Dev/test dependencies
-│   ├── pytest.ini
+│   ├── .env.example          # Environment variable template
+│   ├── main.py               # FastAPI app entry point
+│   ├── schemas.py            # Request / response models
+│   ├── requirements.txt
 │   ├── routers/
-│   │   ├── interview.py              # /api/interview/start & /answer endpoints
-│   │   └── report.py                 # /api/report/generate endpoint
+│   │   ├── interview.py      # /api/interview endpoints
+│   │   └── report.py         # /api/report endpoint
 │   ├── services/
-│   │   └── llm_service.py            # Groq LLM integration & prompt engineering
+│   │   └── llm_service.py    # Groq LLM integration
 │   └── tests/
-│       ├── unit/                     # Unit tests (no network calls)
-│       └── integration/              # Live API tests (skip without real key)
+│       ├── unit/
+│       └── integration/
 │
 └── frontend/
-    ├── .env.local                    # ⚠️ Gitignored — local config only
-    ├── .env.local.example            # ✅ Safe to commit — template
-    ├── .gitignore
-    ├── next.config.mjs
-    ├── package.json
-    └── src/
-        ├── app/
-        │   ├── page.tsx              # Home page — topic/difficulty setup
-        │   ├── layout.tsx
-        │   ├── globals.css
-        │   ├── interview/page.tsx    # Interview chat page
-        │   └── report/page.tsx       # Report + score page
-        ├── components/
-        │   ├── history-drawer.tsx    # Left-drawer with past sessions
-        │   ├── network-status-banner.tsx
-        │   └── ui/                  # shadcn/ui components
-        └── lib/
-            ├── network.ts            # fetchWithRetry + offline detection
-            ├── history-storage.ts    # localStorage interview history
-            └── utils.ts              # Shared utilities + error messages
+    ├── .env.local.example    # Environment variable template
+    ├── src/
+    │   ├── app/
+    │   │   ├── page.tsx          # Home — topic & difficulty setup
+    │   │   ├── interview/        # Multi-turn interview chat
+    │   │   └── report/           # Performance report
+    │   ├── components/
+    │   │   └── history-drawer.tsx
+    │   └── lib/
+    │       ├── network.ts         # Retry + offline detection
+    │       └── history-storage.ts # localStorage persistence
+    └── package.json
 ```
 
 ---
 
-## 🚀 Local Setup
+## 🚀 Getting Started
 
 ### Prerequisites
 
@@ -293,168 +261,87 @@ Interview couch/
 | Python | 3.11+ |
 | Node.js | 18+ |
 | npm | 9+ |
+| Groq API Key | [Get free key →](https://console.groq.com/keys) |
 
-### 1. Clone the repository
+### 1. Clone
 
 ```bash
 git clone https://github.com/ankit2610ak/Interview-couch-.git
-cd "Interview-couch-"
+cd Interview-couch-
 ```
 
-### 2. Backend setup
+### 2. Backend
 
 ```bash
 cd backend
-
-# Create virtual environment
 python3 -m venv venv
-source venv/bin/activate          # Windows: venv\Scripts\activate
+source venv/bin/activate        # Windows: venv\Scripts\activate
+pip install -r requirements.txt
 
-# Install dependencies
-pip install -r requirements-dev.txt
-
-# Configure secrets
 cp .env.example .env
-# Edit .env — paste your real Groq API key
-# Get a free key: https://console.groq.com/keys
+# Open .env and set your GROQ_API_KEY
 
-# Start the API server
 uvicorn main:app --reload --port 8000
 ```
 
-Backend is now running at **http://localhost:8000**
+API running at **http://localhost:8000**
 
-### 3. Frontend setup (new terminal)
+### 3. Frontend *(new terminal)*
 
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Configure environment
 cp .env.local.example .env.local
-# Edit .env.local if your backend runs on a different port
-
-# Start the dev server
 npm run dev
 ```
 
-Frontend is now running at **http://localhost:3000**
+App running at **http://localhost:3000** 🎉
 
 ---
 
 ## 🔑 Environment Variables
 
-### Backend — `backend/.env`
+### `backend/.env`
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `GROQ_API_KEY` | ✅ | — | Your Groq API key from console.groq.com/keys |
-| `GROQ_MODEL` | ❌ | `llama-3.3-70b-versatile` | Groq model to use |
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `GROQ_API_KEY` | ✅ | Groq API key — [console.groq.com/keys](https://console.groq.com/keys) |
+| `GROQ_MODEL` | ❌ | Model name (default: `llama-3.3-70b-versatile`) |
 
-### Frontend — `frontend/.env.local`
+### `frontend/.env.local`
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `NEXT_PUBLIC_API_URL` | ❌ | `http://localhost:8000` | Backend API base URL |
-
-> **Security:** Both `.env` and `.env.local` are gitignored and never committed. Use the `.example` templates to configure fresh environments.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `NEXT_PUBLIC_API_URL` | ❌ | Backend URL (default: `http://localhost:8000`) |
 
 ---
 
-## 🧪 Running Tests
+## ☁️ Deployment
 
-```bash
-cd backend
-source venv/bin/activate
+### Recommended: Vercel + Railway
 
-# Run all tests (37 pass, 1 skipped without real API key)
-pytest -v
+**Backend → Railway**
+1. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub
+2. Set Root Directory to `backend`
+3. Add env vars: `GROQ_API_KEY` and `GROQ_MODEL`
+4. Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 
-# Run only unit tests (no API key needed)
-pytest tests/unit/ -v
-
-# Run integration tests (requires valid GROQ_API_KEY in .env)
-pytest tests/integration/ -v
-```
-
----
-
-## ☁️ Deployment Guide
-
-### Option A — Vercel (Frontend) + Railway (Backend) ✅ Recommended
-
-#### Backend on Railway
-
-1. Push code to GitHub (see instructions below)
-2. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub
-3. Select the repository, set **Root Directory** to `backend`
-4. Add environment variables in Railway dashboard:
-   - `GROQ_API_KEY` = your real Groq key
-   - `GROQ_MODEL` = `llama-3.3-70b-versatile`
-5. Railway auto-detects Python; add a start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-6. Note your Railway public URL (e.g. `https://your-app.railway.app`)
-
-#### Frontend on Vercel
-
+**Frontend → Vercel**
 1. Go to [vercel.com](https://vercel.com) → New Project → Import from GitHub
-2. Set **Root Directory** to `frontend`
-3. Add environment variable:
-   - `NEXT_PUBLIC_API_URL` = your Railway backend URL (no trailing slash)
-4. Click **Deploy** — Vercel handles the Next.js build automatically
-
----
-
-### Option B — Single VPS (DigitalOcean / EC2 / Render)
-
-```bash
-git clone https://github.com/ankit2610ak/Interview-couch-.git
-cd "Interview-couch-"
-
-# Backend
-cd backend
-python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env && nano .env   # paste your GROQ_API_KEY
-
-pip install gunicorn
-gunicorn main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
-
-# Frontend (separate terminal)
-cd ../frontend
-cp .env.local.example .env.local
-# Set NEXT_PUBLIC_API_URL to your backend domain
-npm install && npm run build
-npm start   # runs on port 3000
-```
-
-Use **Nginx** as a reverse proxy to serve both on ports 80/443.
-
----
-
-## 🔒 Security Notes
-
-| Concern | How it's handled |
-|---------|-----------------|
-| API key exposure | `backend/.env` is gitignored at root level |
-| Reverse-engineering | `GROQ_API_KEY` lives **only on the server**; frontend never receives it |
-| Frontend env | `NEXT_PUBLIC_API_URL` is a URL, not a secret |
-| Template files | `.env.example` / `.env.local.example` contain only placeholder values |
-| CORS | Restrict `allow_origins` to your frontend domain in production |
+2. Set Root Directory to `frontend`
+3. Add env var: `NEXT_PUBLIC_API_URL` = your Railway backend URL
+4. Click **Deploy**
 
 ---
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Commit changes: `git commit -m "feat: add my feature"`
-4. Push: `git push origin feature/my-feature`
-5. Open a Pull Request
+1. Fork the repo and create a branch: `git checkout -b feature/my-feature`
+2. Commit your changes: `git commit -m "feat: description"`
+3. Push and open a Pull Request
 
 ---
 
 ## 📄 License
 
-MIT © 2024 — free to use, modify, and distribute.
+MIT © 2024

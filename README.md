@@ -2,10 +2,16 @@
 
 An AI-powered mock interview application that conducts technical interviews, gives real-time feedback, and stores your session history — powered by **Groq LLM**, **FastAPI**, and **Next.js**.
 
+[![Live Demo](https://img.shields.io/badge/Demo-interview--couch.vercel.app-blueviolet?style=for-the-badge&logo=vercel)](https://interview-couch.vercel.app)
+[![API Status](https://img.shields.io/badge/API-Render-brightgreen?style=for-the-badge&logo=render)](https://interview-couch-api.onrender.com)
+
 ![Tech Stack](https://img.shields.io/badge/stack-FastAPI%20%7C%20Next.js%20%7C%20Groq-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.11%2B-brightgreen?style=flat-square)
 ![Node](https://img.shields.io/badge/node-18%2B-brightgreen?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-orange?style=flat-square)
+
+🌐 **Live Application:** [https://interview-couch.vercel.app](https://interview-couch.vercel.app)  
+⚡ **Production Backend API:** [https://interview-couch-api.onrender.com](https://interview-couch-api.onrender.com)
 
 ---
 
@@ -306,7 +312,8 @@ App running at **http://localhost:3000** 🎉
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `GROQ_API_KEY` | ✅ | Groq API key — [console.groq.com/keys](https://console.groq.com/keys) |
-| `GROQ_MODEL` | ❌ | Model name (default: `llama-3.3-70b-versatile`) |
+| `GROQ_MODEL` | ❌ | Model name (default: `openai/gpt-oss-120b`) |
+| `CORS_ORIGINS` | ❌ | Comma-separated allowed frontend origins |
 
 ### `frontend/.env.local`
 
@@ -318,18 +325,26 @@ App running at **http://localhost:3000** 🎉
 
 ## ☁️ Deployment
 
-### Recommended: Vercel + Railway
+### Production Setup: Vercel + Render (Free Tier)
 
-**Backend → Railway**
-1. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub
-2. Set Root Directory to `backend`
-3. Add env vars: `GROQ_API_KEY` and `GROQ_MODEL`
-4. Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+**Backend → Render (Web Service)**
+1. Go to [dashboard.render.com](https://dashboard.render.com) → **New** → **Web Service**
+2. Connect your GitHub repository `ankit2610ak/Interview-couch-`
+3. Configure settings:
+   - **Root Directory:** `backend`
+   - **Environment:** `Python 3`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
+4. In **Environment Variables**, add:
+   - `GROQ_API_KEY` = your Groq API key
+   - `GROQ_MODEL` = `openai/gpt-oss-120b`
 
 **Frontend → Vercel**
-1. Go to [vercel.com](https://vercel.com) → New Project → Import from GitHub
-2. Set Root Directory to `frontend`
-3. Add env var: `NEXT_PUBLIC_API_URL` = your Railway backend URL
+1. Go to [vercel.com](https://vercel.com) → **Add New** → **Project** → Import `ankit2610ak/Interview-couch-`
+2. Set **Root Directory** to `frontend`
+3. In **Environment Variables**, add:
+   - `NEXT_PUBLIC_API_URL` = your Render backend URL (e.g., `https://interview-couch-api.onrender.com`)
+   - Type: **Config** (not Secret)
 4. Click **Deploy**
 
 ---

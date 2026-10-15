@@ -178,3 +178,26 @@ class TestFullInterviewWorkflowIntegration:
         assert isinstance(report_data["weaknesses"], str)
         assert isinstance(report_data["revision_areas"], str)
         assert isinstance(report_data["verdict"], str)
+
+    @pytest.mark.skipif(not GROQ_API_KEY_PRESENT, reason="Live Groq API test requires GROQ_API_KEY")
+    def test_live_invalid_topic_rejection(self, client: TestClient):
+        """Live integration test: gibberish topic is rejected with 400 and helpful message."""
+        res = client.post(
+            "/api/interview/start",
+            json={"topic": "lala", "difficulty": "Medium"},
+        )
+        assert res.status_code == 400
+        data = res.json()
+        assert "does not appear to be a valid interview topic" in data["detail"]
+
+    @pytest.mark.skipif(not GROQ_API_KEY_PRESENT, reason="Live Groq API test requires GROQ_API_KEY")
+    def test_live_typo_topic_acceptance(self, client: TestClient):
+        """Live integration test: recognizable typo topic is accepted and generates question."""
+        res = client.post(
+            "/api/interview/start",
+            json={"topic": "pyton", "difficulty": "Easy"},
+        )
+        assert res.status_code == 200
+        data = res.json()
+        assert isinstance(data["first_message"], str)
+        assert len(data["first_message"]) > 10

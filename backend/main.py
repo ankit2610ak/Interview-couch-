@@ -56,6 +56,8 @@ allowed_origins = [
 ] if env_origins else [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001",
     "https://interview-couch.vercel.app",
     "https://interview-couch-n4i1hgzol-ganraj-creations.vercel.app",
 ]

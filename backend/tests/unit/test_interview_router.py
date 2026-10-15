@@ -38,9 +38,21 @@ class TestInterviewStartEndpoint:
 
     def test_start_interview_invalid_topic_returns_400(self, client: TestClient):
         """POST /api/interview/start returns 400 when invalid/gibberish topic is provided."""
-        response = client.post("/api/interview/start", json={"topic": "lala", "difficulty": "Medium"})
-        assert response.status_code == 400
-        assert "does not appear to be a valid interview topic" in response.json()["detail"]
+        for bad_topic in ["lala", "xyz", "abc", "qwerty", "1234"]:
+            response = client.post("/api/interview/start", json={"topic": bad_topic, "difficulty": "Medium"})
+            assert response.status_code == 400, f"Expected 400 for {bad_topic}"
+            assert "does not appear to be a valid interview topic" in response.json()["detail"]
+
+    @patch("routers.interview.get_next_interviewer_message")
+    @patch("routers.interview.validate_interview_topic")
+    def test_start_interview_typo_accepted(self, mock_validate, mock_get_msg, client: TestClient):
+        """POST /api/interview/start accepts close typos and generates the first question."""
+        mock_validate.return_value = True
+        mock_get_msg.return_value = ("Let's begin with Python basics. What is a list?", False)
+
+        response = client.post("/api/interview/start", json={"topic": "pyton", "difficulty": "Easy"})
+        assert response.status_code == 200
+        assert response.json()["first_message"] == "Let's begin with Python basics. What is a list?"
 
     @patch("routers.interview.get_next_interviewer_message")
     def test_start_interview_service_exception_returns_500(self, mock_get_msg, client: TestClient):

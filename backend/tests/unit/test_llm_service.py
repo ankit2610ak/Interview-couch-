@@ -224,3 +224,78 @@ class TestGenerateInterviewReport:
 
         with pytest.raises(ValueError, match="No valid JSON object could be extracted"):
             llm_service.generate_interview_report("DevOps", "Easy", [])
+
+
+class TestTopicValidation:
+    """Comprehensive unit tests for topic validation (heuristics + LLM validation)."""
+
+    def test_syntactically_invalid_topics(self):
+        """Heuristic check rejects single chars, repeated chars, numbers, and known dummy words."""
+        invalid_topics = [
+            "",
+            " ",
+            "a",
+            "123",
+            "???",
+            "aaaaa",
+            "zzzzz",
+            "lala",
+            "xyz",
+            "abc",
+            "asdf",
+            "qwerty",
+            "test",
+            "foo",
+            "bar",
+            "baz",
+            "null",
+        ]
+        for topic in invalid_topics:
+            assert llm_service.is_syntactically_invalid_topic(topic) is True, f"Failed for {topic}"
+            assert llm_service.validate_interview_topic(topic) is False, f"Failed for {topic}"
+
+    def test_syntactically_valid_topics(self):
+        """Heuristic check accepts meaningful strings."""
+        valid_topics = [
+            "Python",
+            "React",
+            "Kubernetes",
+            "System Design",
+            "DSA",
+            "pyton",
+            "reack",
+        ]
+        for topic in valid_topics:
+            assert llm_service.is_syntactically_invalid_topic(topic) is False, f"Failed for {topic}"
+
+    @patch("services.llm_service.get_groq_client")
+    def test_validate_interview_topic_llm_valid(self, mock_get_client):
+        """validate_interview_topic returns True when LLM responds VALID."""
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        mock_resp = MagicMock()
+        mock_resp.choices = [MagicMock(message=MagicMock(content="VALID"))]
+        mock_client.chat.completions.create.return_value = mock_resp
+
+        assert llm_service.validate_interview_topic("pyton") is True
+
+    @patch("services.llm_service.get_groq_client")
+    def test_validate_interview_topic_llm_invalid(self, mock_get_client):
+        """validate_interview_topic returns False when LLM responds INVALID."""
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        mock_resp = MagicMock()
+        mock_resp.choices = [MagicMock(message=MagicMock(content="INVALID"))]
+        mock_client.chat.completions.create.return_value = mock_resp
+
+        assert llm_service.validate_interview_topic("something_random_gibberish") is False
+
+    @patch("services.llm_service.get_groq_client")
+    def test_validate_interview_topic_llm_failure_fails_open(self, mock_get_client):
+        """If LLM call fails, validator should fail open (return True) to avoid blocking users."""
+        mock_client = MagicMock()
+        mock_get_client.return_value = mock_client
+        mock_client.chat.completions.create.side_effect = RuntimeError("Groq connection timeout")
+
+        # Non-syntactically invalid topic should fail open
+        assert llm_service.validate_interview_topic("Microservices Architecture") is True
